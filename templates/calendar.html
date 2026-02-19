@@ -1,0 +1,99 @@
+{{define "calendar"}}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reminder — Calendário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+{{template "base_css" .}}
+<style>
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.ct{font-family:'DM Serif Display',serif;font-size:1.75rem;letter-spacing:-0.02em;}
+.cn{display:flex;align-items:center;gap:0.65rem;}
+.cn a{padding:0.4rem 0.8rem;border:1.5px solid var(--border);border-radius:8px;text-decoration:none;color:var(--ink);font-size:0.875rem;transition:all 0.2s;}
+.cn a:hover{border-color:var(--amber);color:var(--amber);}
+.cm{font-family:'DM Serif Display',serif;font-size:1.1rem;min-width:150px;text-align:center;}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.dow{background:var(--ink);color:#f5f0e8;padding:0.5rem;text-align:center;font-size:0.75rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.05em;}
+.day{background:var(--card);min-height:90px;padding:0.45rem;transition:background 0.15s;}
+.day:hover{background:var(--cream);}
+.day.empty{background:var(--paper);opacity:0.5;}
+.day.today{background:var(--amber-pale);}
+.dn{font-size:0.75rem;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:0.3rem;font-weight:500;display:flex;align-items:center;justify-content:center;width:22px;height:22px;}
+.day.today .dn{background:var(--amber);color:white;border-radius:50%;}
+.cr{background:var(--amber);color:white;padding:0.12rem 0.35rem;border-radius:4px;font-size:0.68rem;margin-bottom:0.18rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:background 0.15s;}
+.cr:hover{background:var(--amber-light);}
+.cr.priority-high{background:var(--high);}
+.cr.priority-low{background:var(--sage);}
+.ss{margin-top:1.5rem;}
+.st{font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:0.85rem;}
+.sl{display:flex;flex-direction:column;gap:0.45rem;}
+.si{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;display:flex;align-items:flex-start;gap:0.75rem;}
+.sd{font-family:'DM Mono',monospace;font-size:0.73rem;color:var(--muted);min-width:60px;}
+.sn2{font-size:0.875rem;font-weight:500;}
+.sdesc{font-size:0.78rem;color:var(--muted);margin-top:0.12rem;}
+@media(max-width:640px){.day{min-height:55px;}.cr{font-size:0.6rem;}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="nav-brand">🔔 reminder</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Lista</a>
+    <a href="/calendar" class="nav-link active">Calendário</a>
+    <a href="/settings" class="nav-link">Config</a>
+  </div>
+  <div class="nav-user">Olá, <strong>{{.User.Username}}</strong> &nbsp;<a href="/logout" class="btn btn-ghost btn-sm">Sair</a></div>
+</nav>
+
+<div class="container">
+  <div class="ch">
+    <h1 class="ct">Calendário</h1>
+    <div class="cn">
+      <a href="/calendar?year={{.PrevYear}}&month={{.PrevMonth}}">← Ant</a>
+      <span class="cm">{{.MonthName}} {{.Year}}</span>
+      <a href="/calendar?year={{.NextYear}}&month={{.NextMonth}}">Próx →</a>
+    </div>
+    <a href="/calendar" class="btn btn-outline btn-sm">Hoje</a>
+  </div>
+
+  <div class="grid">
+    <div class="dow">Dom</div><div class="dow">Seg</div><div class="dow">Ter</div>
+    <div class="dow">Qua</div><div class="dow">Qui</div><div class="dow">Sex</div><div class="dow">Sáb</div>
+
+    {{range seq .StartOffset}}<div class="day empty"></div>{{end}}
+
+    {{$today := .Now}}{{$dayMap := .DayMap}}{{$month := .Month}}{{$year := .Year}}
+    {{range $i := seq .LastDay.Day}}
+    {{$isToday := and (eq $today.Day $i) (eq (int $today.Month) $month) (eq $today.Year $year)}}
+    <div class="day {{if $isToday}}today{{end}}">
+      <div class="dn">{{$i}}</div>
+      {{range index $dayMap $i}}
+      <div class="cr priority-{{.Priority}}" title="{{.Title}}" onclick="location.href='/'">{{.Title}}</div>
+      {{end}}
+    </div>
+    {{end}}
+  </div>
+
+  {{if .Reminders}}
+  <div class="ss">
+    <h2 class="st">Lembretes em {{.MonthName}}</h2>
+    <div class="sl">
+      {{range .Reminders}}
+      <div class="si">
+        <div class="sd">{{if .HasDueDate}}{{formatDateShort .DueDate}}{{else}}—{{end}}</div>
+        <div>
+          <div class="sn2">{{.Title}} <span class="badge {{priorityColor .Priority}}">{{.Priority}}</span></div>
+          {{if .Description}}<div class="sdesc">{{.Description}}</div>{{end}}
+        </div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+</div>
+
+<div id="toast"></div>
+{{template "base_js" .}}
+</body></html>
+{{end}}

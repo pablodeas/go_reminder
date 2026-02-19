@@ -1,0 +1,413 @@
+{{define "index"}}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reminder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+{{template "base_css" .}}
+<style>
+.nav-bell{position:relative;cursor:pointer;font-size:1.15rem;background:none;border:none;color:rgba(245,240,232,0.7);padding:0.3rem 0.4rem;border-radius:6px;transition:color 0.2s;line-height:1;}
+.nav-bell:hover{color:#f5f0e8;background:rgba(255,255,255,0.1);}
+.bell-dot{position:absolute;top:2px;right:2px;width:7px;height:7px;background:#ef4444;border-radius:50%;border:1.5px solid var(--ink);display:none;}
+.bell-dot.on{display:block;}
+
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.pt{font-family:'DM Serif Display',serif;font-size:1.75rem;letter-spacing:-0.02em;}
+.psub{color:var(--muted);font-size:0.875rem;margin-top:0.1rem;}
+.toolbar{display:flex;gap:0.5rem;flex-wrap:wrap;}
+
+.sb{display:flex;gap:0.65rem;margin-bottom:1.25rem;flex-wrap:wrap;}
+.si{flex:1;min-width:180px;padding:0.6rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.875rem;background:white;outline:none;transition:border-color 0.2s;font-family:'DM Sans',sans-serif;}
+.si:focus{border-color:var(--amber);}
+.sf{padding:0.6rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.82rem;background:white;outline:none;cursor:pointer;color:var(--ink);font-family:'DM Sans',sans-serif;}
+
+.bb{display:none;align-items:center;gap:0.5rem;padding:0.65rem 1rem;background:var(--amber-pale);border:1px solid #fcd09a;border-radius:10px;margin-bottom:1rem;flex-wrap:wrap;}
+.bb.on{display:flex;}
+.bl{font-size:0.875rem;font-weight:500;flex:1;}
+
+.sr{display:flex;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap;}
+.stat{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:0.35rem 0.9rem;font-size:0.77rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.stat strong{color:var(--ink);}
+.stat.danger{border-color:#fecaca;color:var(--high);}
+.stat.warn{border-color:#fcd09a;color:#92400e;}
+.stat.good{border-color:#bbf7d0;color:var(--sage);}
+
+.list{display:flex;flex-direction:column;gap:0.6rem;}
+
+.item{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:1rem 1.15rem;display:flex;align-items:flex-start;gap:0.85rem;transition:all 0.18s;cursor:pointer;position:relative;overflow:hidden;}
+.item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.item.priority-high::before{background:var(--high);}
+.item.priority-medium::before{background:var(--amber);}
+.item.priority-low::before{background:var(--sage);}
+.item:hover{border-color:var(--amber);box-shadow:var(--shadow-hover);transform:translateX(2px);}
+.item.overdue{background:#fff8f8;}
+
+.ic{width:17px;height:17px;border:2px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0;margin-top:2px;accent-color:var(--amber);}
+.ib{flex:1;min-width:0;}
+.it{font-weight:500;font-size:0.92rem;display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;margin-bottom:0.15rem;}
+.id2{color:var(--muted);font-size:0.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.15rem;}
+.im{display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;margin-top:0.3rem;}
+.me{font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.me.ov{color:var(--high);font-weight:500;}
+.me.sn2{color:var(--amber);}
+.ia{display:flex;gap:0.3rem;opacity:0;transition:opacity 0.18s;flex-shrink:0;}
+.item:hover .ia{opacity:1;}
+.act{width:28px;height:28px;border:none;border-radius:6px;background:transparent;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
+.act:hover{background:var(--cream);}
+.act.del:hover{background:#fee2e2;}
+.stag{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;padding:0.1rem 0.45rem;border-radius:20px;font-size:0.68rem;font-family:'DM Mono',monospace;}
+
+.empty{text-align:center;padding:4rem 2rem;color:var(--muted);}
+.ei{font-size:2.75rem;margin-bottom:0.75rem;}
+.et{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--ink);margin-bottom:0.4rem;}
+.es{font-size:0.875rem;}
+
+.push-banner{display:flex;align-items:center;gap:0.75rem;background:var(--amber-pale);border:1px solid #fcd09a;border-radius:10px;padding:0.8rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:#92400e;}
+
+.np{position:fixed;top:58px;right:1rem;width:310px;background:var(--card);border:1.5px solid var(--border);border-radius:12px;box-shadow:var(--shadow-hover);z-index:500;display:none;overflow:hidden;}
+.np.open{display:block;}
+.nh{padding:0.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.nh span{font-weight:600;font-size:0.875rem;}
+.nl{max-height:320px;overflow-y:auto;}
+.ni{padding:0.75rem 1rem;border-bottom:1px solid var(--border);font-size:0.82rem;}
+.ni:last-child{border-bottom:none;}
+.ni-title{font-weight:500;margin-bottom:0.12rem;}
+.ni-time{color:var(--muted);font-size:0.72rem;font-family:'DM Mono',monospace;}
+.ne{padding:1.5rem;text-align:center;color:var(--muted);font-size:0.85rem;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="nav-brand">🔔 reminder</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link active">Lista</a>
+    <a href="/calendar" class="nav-link">Calendário</a>
+    <a href="/settings" class="nav-link">Config</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.65rem;">
+    <button class="nav-bell" id="bellBtn" onclick="togglePanel()" title="Notificações">🔔<span class="bell-dot" id="bellDot"></span></button>
+    <span class="nav-user">Olá, <strong>{{.User.Username}}</strong></span>
+    <a href="/logout" class="btn btn-ghost btn-sm">Sair</a>
+  </div>
+</nav>
+
+<div class="np" id="np">
+  <div class="nh"><span>Notificações</span><button onclick="clearNotifs()" style="background:none;border:none;cursor:pointer;font-size:0.75rem;color:var(--muted);">Limpar</button></div>
+  <div class="nl" id="nl"><div class="ne">Nenhuma notificação</div></div>
+</div>
+
+<div class="container">
+  <div id="pushBanner" class="push-banner" style="display:none;">
+    🔔 <div><strong>Ativar notificações web</strong> para receber alertas dos seus lembretes no horário.</div>
+    <button class="btn btn-primary btn-sm" style="margin-left:auto;flex-shrink:0;" onclick="reqPerm()">Ativar</button>
+    <button onclick="document.getElementById('pushBanner').style.display='none'" style="background:none;border:none;cursor:pointer;color:#92400e;font-size:1rem;flex-shrink:0;">✕</button>
+  </div>
+
+  <div class="ph">
+    <div>
+      <h1 class="pt">Lembretes</h1>
+      <p class="psub">{{len .Reminders}} lembrete{{if ne (len .Reminders) 1}}s{{end}}</p>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-outline btn-sm" onclick="confirmClear()">🗑 Limpar tudo</button>
+      <button class="btn btn-primary" onclick="openAdd()">+ Novo</button>
+    </div>
+  </div>
+
+  {{if .Reminders}}<div class="sr" id="statsRow"></div>{{end}}
+
+  <div class="sb">
+    <input type="text" class="si" id="searchInput" placeholder="🔍  Buscar..." oninput="filterItems()">
+    <select class="sf" id="priFilter" onchange="filterItems()">
+      <option value="">Prioridade</option>
+      <option value="high">🔴 Alta</option>
+      <option value="medium">🟡 Média</option>
+      <option value="low">🟢 Baixa</option>
+    </select>
+    <select class="sf" id="stFilter" onchange="filterItems()">
+      <option value="">Status</option>
+      <option value="pending">Pendentes</option>
+      <option value="overdue">Vencidos</option>
+      <option value="sent">Notificados</option>
+    </select>
+  </div>
+
+  <div class="bb" id="bulkBar">
+    <span class="bl"><span id="selCount">0</span> selecionados</span>
+    <button class="btn btn-danger btn-sm" onclick="bulkDelete()">🗑 Excluir</button>
+    <button class="btn btn-ghost btn-sm" style="color:var(--ink);" onclick="clearSel()">✕</button>
+  </div>
+
+  <div class="list" id="list">
+    {{if .Reminders}}
+      {{range .Reminders}}
+      <div class="item {{priorityColor .Priority}} {{if and .HasDueDate (isPast .DueDate)}}overdue{{end}}"
+           data-id="{{.ID}}" data-title="{{.Title}}" data-desc="{{.Description}}"
+           data-priority="{{.Priority}}" data-tags="{{.Tags}}"
+           data-due="{{if .HasDueDate}}{{formatDateInput .DueDate}}{{end}}"
+           data-sent="{{if .HasSentAt}}1{{end}}"
+           onclick="handleClick(event,this)">
+        <input type="checkbox" class="ic" onclick="event.stopPropagation();updateBulk()">
+        <div class="ib">
+          <div class="it">
+            {{.Title}}
+            {{if .HasSentAt}}<span class="stag">✓ notificado</span>{{end}}
+            <span class="badge {{priorityColor .Priority}}">{{.Priority}}</span>
+            {{if .Tags}}<span style="font-size:0.75rem;color:var(--muted);">🏷 {{.Tags}}</span>{{end}}
+          </div>
+          {{if .Description}}<div class="id2">{{.Description}}</div>{{end}}
+          <div class="im">
+            <span class="me">#{{.ID}}</span>
+            {{if .HasDueDate}}
+              {{if isPast .DueDate}}<span class="me ov">⚠ Vencido · {{formatDate .DueDate}}</span>
+              {{else if isSoon .DueDate}}<span class="me sn2">⏰ Em breve · {{formatDate .DueDate}}</span>
+              {{else}}<span class="me">📅 {{formatDate .DueDate}}</span>{{end}}
+            {{end}}
+          </div>
+        </div>
+        <div class="ia">
+          <button class="act" onclick="event.stopPropagation();editItem(this.closest('.item'))" title="Editar">✏️</button>
+          <button class="act del" onclick="event.stopPropagation();delItem({{.ID}},this)" title="Excluir">🗑</button>
+        </div>
+      </div>
+      {{end}}
+    {{else}}
+      <div class="empty"><div class="ei">🔔</div><div class="et">Nenhum lembrete ainda</div><p class="es">Clique em "+ Novo" para criar o primeiro.</p></div>
+    {{end}}
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Novo Lembrete</h2>
+      <button onclick="closeModal('modal')" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted);">✕</button>
+    </div>
+    <input type="hidden" id="editId">
+    <div class="form-group"><label>Título *</label><input type="text" id="rTitle" class="form-control" placeholder="O que lembrar..."></div>
+    <div class="form-group"><label>Descrição</label><textarea id="rDesc" class="form-control" placeholder="Detalhes (opcional)"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group"><label>Data/hora</label><input type="datetime-local" id="rDue" class="form-control"></div>
+      <div class="form-group"><label>Prioridade</label>
+        <select id="rPriority" class="form-control">
+          <option value="low">🟢 Baixa</option>
+          <option value="medium" selected>🟡 Média</option>
+          <option value="high">🔴 Alta</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Tags</label><input type="text" id="rTags" class="form-control" placeholder="trabalho, pessoal (vírgula)"></div>
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem;">
+      <button class="btn btn-outline" onclick="closeModal('modal')">Cancelar</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveItem()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+{{template "base_js" .}}
+<script>
+// ── Stats
+function updateStats(){
+  var items=document.querySelectorAll('.item');
+  var now=new Date(),ov=0,hi=0,se=0;
+  items.forEach(function(el){
+    if(el.dataset.sent==='1')se++;
+    if(el.classList.contains('priority-high'))hi++;
+    var d=el.dataset.due;
+    if(d&&new Date(d)<now&&el.dataset.sent!=='1')ov++;
+  });
+  var row=document.getElementById('statsRow');
+  if(!row)return;
+  row.innerHTML='<div class="stat"><strong>'+items.length+'</strong> total</div>'+
+    (ov?'<div class="stat danger"><strong>'+ov+'</strong> vencidos</div>':'')+
+    (hi?'<div class="stat warn"><strong>'+hi+'</strong> alta prioridade</div>':'')+
+    (se?'<div class="stat good"><strong>'+se+'</strong> notificados</div>':'');
+}
+updateStats();
+
+// ── Filter
+function filterItems(){
+  var q=document.getElementById('searchInput').value.toLowerCase();
+  var pri=document.getElementById('priFilter').value;
+  var st=document.getElementById('stFilter').value;
+  var now=new Date();
+  document.querySelectorAll('.item').forEach(function(el){
+    var title=el.dataset.title.toLowerCase(),desc=el.dataset.desc.toLowerCase(),tags=el.dataset.tags.toLowerCase();
+    var p=el.dataset.priority,isSent=el.dataset.sent==='1';
+    var due=el.dataset.due?new Date(el.dataset.due):null;
+    var show=true;
+    if(q&&!title.includes(q)&&!desc.includes(q)&&!tags.includes(q))show=false;
+    if(pri&&p!==pri)show=false;
+    if(st==='pending'&&isSent)show=false;
+    if(st==='overdue'&&(!due||due>=now))show=false;
+    if(st==='sent'&&!isSent)show=false;
+    el.style.display=show?'':'none';
+  });
+}
+
+// ── Selection
+function updateBulk(){
+  var n=document.querySelectorAll('.ic:checked').length;
+  document.getElementById('selCount').textContent=n;
+  document.getElementById('bulkBar').classList.toggle('on',n>0);
+}
+function clearSel(){document.querySelectorAll('.ic').forEach(function(c){c.checked=false;});updateBulk();}
+
+// ── CRUD
+function handleClick(e,el){if(e.target.classList.contains('ic')||e.target.closest('.ia'))return;editItem(el);}
+
+function openAdd(){
+  document.getElementById('editId').value='';
+  document.getElementById('modalTitle').textContent='Novo Lembrete';
+  document.getElementById('rTitle').value='';
+  document.getElementById('rDesc').value='';
+  document.getElementById('rDue').value='';
+  document.getElementById('rPriority').value='medium';
+  document.getElementById('rTags').value='';
+  openModal('modal');
+  setTimeout(function(){document.getElementById('rTitle').focus();},80);
+}
+
+function editItem(el){
+  document.getElementById('editId').value=el.dataset.id;
+  document.getElementById('modalTitle').textContent='Editar Lembrete';
+  document.getElementById('rTitle').value=el.dataset.title;
+  document.getElementById('rDesc').value=el.dataset.desc;
+  document.getElementById('rDue').value=el.dataset.due;
+  document.getElementById('rPriority').value=el.dataset.priority;
+  document.getElementById('rTags').value=el.dataset.tags;
+  openModal('modal');
+}
+
+async function saveItem(){
+  var title=document.getElementById('rTitle').value.trim();
+  if(!title){showToast('Título é obrigatório','error');return;}
+  var id=document.getElementById('editId').value;
+  var payload={title:title,description:document.getElementById('rDesc').value,due_date:document.getElementById('rDue').value,priority:document.getElementById('rPriority').value,tags:document.getElementById('rTags').value};
+  var btn=document.getElementById('saveBtn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  try{
+    if(id){await api('/api/reminders/'+id,'PUT',payload);showToast('Atualizado!');}
+    else{await api('/api/reminders','POST',payload);showToast('Criado!');}
+    closeModal('modal');
+    setTimeout(function(){location.reload();},500);
+  }catch(e){showToast(e.message,'error');}
+  finally{btn.innerHTML='Salvar';btn.disabled=false;}
+}
+
+async function delItem(id,btn){
+  if(!confirm('Excluir este lembrete?'))return;
+  try{await api('/api/reminders/'+id,'DELETE');btn.closest('.item').remove();showToast('Excluído');updateStats();}
+  catch(e){showToast(e.message,'error');}
+}
+
+async function bulkDelete(){
+  var checked=[...document.querySelectorAll('.ic:checked')];
+  if(!checked.length)return;
+  if(!confirm('Excluir '+checked.length+' lembrete(s)?'))return;
+  var ids=checked.map(function(c){return parseInt(c.closest('.item').dataset.id);});
+  try{await api('/api/reminders/bulk-delete','POST',{ids:ids});checked.forEach(function(c){c.closest('.item').remove();});showToast('Excluídos: '+ids.length);clearSel();updateStats();}
+  catch(e){showToast(e.message,'error');}
+}
+
+async function confirmClear(){
+  var count=document.querySelectorAll('.item').length;
+  if(!count){showToast('Nenhum lembrete','info');return;}
+  if(!confirm('Excluir TODOS os '+count+' lembretes?'))return;
+  try{await api('/api/reminders/clear','DELETE');showToast('Tudo limpo');setTimeout(function(){location.reload();},500);}
+  catch(e){showToast(e.message,'error');}
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='n'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA')openAdd();
+});
+
+// ── Notification Panel
+var notifs=[];
+try{notifs=JSON.parse(localStorage.getItem('reminder_notifs')||'[]');}catch(e){}
+
+function togglePanel(){
+  var p=document.getElementById('np');
+  p.classList.toggle('open');
+  if(p.classList.contains('open'))renderPanel();
+}
+
+function renderPanel(){
+  var nl=document.getElementById('nl');
+  if(!notifs.length){nl.innerHTML='<div class="ne">Nenhuma notificação</div>';document.getElementById('bellDot').classList.remove('on');return;}
+  nl.innerHTML=notifs.slice().reverse().map(function(n){return'<div class="ni"><div class="ni-title">'+n.title+'</div><div class="ni-time">'+n.time+'</div></div>';}).join('');
+}
+
+function clearNotifs(){notifs=[];localStorage.setItem('reminder_notifs','[]');renderPanel();}
+
+function addNotif(title,time){
+  notifs.push({title:title,time:time});
+  if(notifs.length>50)notifs=notifs.slice(-50);
+  localStorage.setItem('reminder_notifs',JSON.stringify(notifs));
+  document.getElementById('bellDot').classList.add('on');
+}
+
+document.addEventListener('click',function(e){
+  var p=document.getElementById('np'),b=document.getElementById('bellBtn');
+  if(p.classList.contains('open')&&!p.contains(e.target)&&!b.contains(e.target))p.classList.remove('open');
+});
+
+// ── Web Push
+function checkBanner(){if(Notification.permission==='default')document.getElementById('pushBanner').style.display='flex';}
+
+function reqPerm(){
+  Notification.requestPermission().then(function(p){
+    document.getElementById('pushBanner').style.display='none';
+    if(p==='granted'){showToast('Notificações ativadas! ✓','success');startChecking();}
+    else showToast('Permissão negada.','error');
+  });
+}
+
+function sendNotif(title,body,tag){
+  if(Notification.permission!=='granted')return;
+  var n=new Notification('🔔 '+title,{body:body||'',tag:tag||'rem',requireInteraction:false});
+  addNotif(title+(body?' — '+body:''),new Date().toLocaleString('pt-BR'));
+  n.onclick=function(){window.focus();n.close();};
+}
+
+var checkTimer=null;
+var notifiedIds=[];
+try{notifiedIds=JSON.parse(localStorage.getItem('reminder_notified_ids')||'[]');}catch(e){}
+
+function startChecking(){
+  if(checkTimer)clearInterval(checkTimer);
+  checkTimer=setInterval(checkDue,30000);
+  checkDue();
+}
+
+async function checkDue(){
+  if(Notification.permission!=='granted')return;
+  try{
+    var data=await api('/api/reminders','GET');
+    var now=new Date();
+    data.forEach(function(r){
+      if(!r.DueDate||r.HasSentAt)return;
+      var due=new Date(r.DueDate);
+      var diffMin=(due-now)/60000;
+      if(diffMin<=5&&diffMin>-60&&notifiedIds.indexOf(r.ID)===-1){
+        var msg=diffMin<=0?'Lembrete venceu!':'Vence em '+Math.ceil(diffMin)+' min';
+        sendNotif(r.Title,(r.Description?r.Description+' — ':'')+msg,'rem-'+r.ID);
+        notifiedIds.push(r.ID);
+        localStorage.setItem('reminder_notified_ids',JSON.stringify(notifiedIds));
+        api('/api/reminders/'+r.ID+'/notify','POST').catch(function(){});
+      }
+    });
+  }catch(e){}
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  checkBanner();
+  if(Notification.permission==='granted')startChecking();
+  if(notifs.length)document.getElementById('bellDot').classList.add('on');
+});
+</script>
+</body></html>
+{{end}}

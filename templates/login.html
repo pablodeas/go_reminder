@@ -1,0 +1,73 @@
+{{define "login"}}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reminder — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+{{template "base_css" .}}
+<style>
+.auth-page{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;}
+.auth-brand{background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem;position:relative;overflow:hidden;}
+.auth-brand::before{content:'';position:absolute;width:400px;height:400px;border:1px solid rgba(201,120,42,0.15);border-radius:50%;top:-120px;left:-100px;}
+.auth-brand::after{content:'';position:absolute;width:280px;height:280px;border:1px solid rgba(201,120,42,0.08);border-radius:50%;bottom:-60px;right:-60px;}
+.brand-logo{font-family:'DM Serif Display',serif;font-size:3rem;color:var(--amber);text-align:center;position:relative;z-index:1;}
+.brand-logo span{display:block;font-size:3.5rem;margin-bottom:0.5rem;}
+.brand-tagline{color:rgba(245,240,232,0.45);margin-top:0.75rem;font-size:0.9rem;text-align:center;position:relative;z-index:1;font-style:italic;}
+.brand-features{margin-top:2.5rem;display:flex;flex-direction:column;gap:0.65rem;position:relative;z-index:1;}
+.brand-feat{color:rgba(245,240,232,0.55);font-size:0.83rem;display:flex;align-items:center;gap:0.5rem;}
+.brand-feat::before{content:'→';color:var(--amber);}
+.auth-side{display:flex;align-items:center;justify-content:center;padding:3rem;background:var(--paper);}
+.auth-wrap{width:100%;max-width:360px;}
+.auth-title{font-family:'DM Serif Display',serif;font-size:1.85rem;margin-bottom:0.3rem;letter-spacing:-0.02em;}
+.auth-sub{color:var(--muted);font-size:0.875rem;margin-bottom:1.75rem;}
+.auth-links{display:flex;flex-direction:column;gap:0.65rem;margin-top:1.5rem;text-align:center;}
+.auth-link{color:var(--amber);text-decoration:none;font-size:0.875rem;}
+.auth-link:hover{text-decoration:underline;}
+.auth-divider{color:var(--muted);font-size:0.8rem;margin:0.25rem 0;}
+.success-banner{background:var(--amber-pale);border:1px solid #fcd09a;border-radius:8px;padding:0.7rem 1rem;font-size:0.875rem;color:#92400e;margin-bottom:1.5rem;text-align:center;}
+@media(max-width:768px){.auth-page{grid-template-columns:1fr;}.auth-brand{display:none;}}
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-brand">
+    <div class="brand-logo"><span>🔔</span>reminder</div>
+    <p class="brand-tagline">Nunca esqueça o que importa</p>
+    <div class="brand-features">
+      <div class="brand-feat">Lembretes com notificação web</div>
+      <div class="brand-feat">Calendário visual mensal</div>
+      <div class="brand-feat">Prioridades e tags</div>
+      <div class="brand-feat">Dados persistentes com SQLite</div>
+    </div>
+  </div>
+  <div class="auth-side">
+    <div class="auth-wrap">
+      <h1 class="auth-title">Bem-vindo</h1>
+      <p class="auth-sub">Entre na sua conta</p>
+      {{if .Registered}}<div class="success-banner">✓ Conta criada! Faça login.</div>{{end}}
+      {{if .Reset}}<div class="success-banner">✓ Senha redefinida! Faça login.</div>{{end}}
+      {{if .Error}}<div class="alert alert-error">⚠ {{.Error}}</div>{{end}}
+      <form method="POST" action="/login" autocomplete="on">
+        <div class="form-group">
+          <label for="username">Usuário</label>
+          <input id="username" type="text" name="username" class="form-control" placeholder="seu_usuario" required autofocus autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input id="password" type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.7rem;margin-top:0.25rem;">Entrar</button>
+      </form>
+      <div class="auth-links">
+        <a href="/forgot-password" class="auth-link">Esqueceu a senha?</a>
+        <div class="auth-divider">Não tem conta?</div>
+        <a href="/register" class="auth-link">Criar conta →</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+{{template "base_js" .}}
+</body></html>
+{{end}}

@@ -1,0 +1,50 @@
+{{define "reset"}}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reminder — Nova Senha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+{{template "base_css" .}}
+<style>
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;}
+.auth-wrap{width:100%;max-width:380px;}
+.auth-header{text-align:center;margin-bottom:1.75rem;}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:1.75rem;color:var(--amber);margin-bottom:0.25rem;}
+.auth-title{font-family:'DM Serif Display',serif;font-size:1.6rem;margin-bottom:0.2rem;}
+.auth-sub{color:var(--muted);font-size:0.875rem;}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;box-shadow:var(--shadow);}
+.auth-footer{text-align:center;margin-top:1.25rem;font-size:0.875rem;color:var(--muted);}
+.auth-footer a{color:var(--amber);text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-wrap">
+    <div class="auth-header">
+      <div class="auth-logo">🔔 reminder</div>
+      <h1 class="auth-title">Nova senha</h1>
+      <p class="auth-sub">Escolha uma senha forte</p>
+    </div>
+    <div class="auth-card">
+      {{if .Error}}<div class="alert alert-error">⚠ {{.Error}}</div>{{end}}
+      <form method="POST" action="/reset-password" autocomplete="on">
+        <input type="hidden" name="token" value="{{.Token}}">
+        <div class="form-group">
+          <label for="password">Nova Senha</label>
+          <input id="password" type="password" name="password" class="form-control" placeholder="Mínimo 6 caracteres" required minlength="6" autofocus autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="confirm">Confirmar Senha</label>
+          <input id="confirm" type="password" name="confirm" class="form-control" placeholder="Repita a senha" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.7rem;">Redefinir Senha</button>
+      </form>
+    </div>
+    <div class="auth-footer"><a href="/login">← Voltar ao login</a></div>
+  </div>
+</div>
+<div id="toast"></div>
+{{template "base_js" .}}
+</body></html>
+{{end}}

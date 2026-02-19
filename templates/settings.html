@@ -1,0 +1,99 @@
+{{define "settings"}}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reminder — Configurações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+{{template "base_css" .}}
+<style>
+.page-title{font-family:'DM Serif Display',serif;font-size:1.75rem;margin-bottom:1.5rem;}
+.sw{display:grid;grid-template-columns:190px 1fr;gap:1.75rem;align-items:start;}
+.sn{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.sn a{display:block;padding:0.8rem 1rem;font-size:0.875rem;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);transition:all 0.15s;}
+.sn a:last-child{border-bottom:none;}
+.sn a:hover{background:var(--cream);color:var(--ink);}
+.sn a.active{background:var(--amber-pale);color:var(--amber);font-weight:500;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.sec{padding:1.5rem;border-bottom:1px solid var(--border);}
+.sec:last-child{border-bottom:none;}
+.sec-title{font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:0.2rem;}
+.sec-desc{font-size:0.82rem;color:var(--muted);margin-bottom:1.1rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.info{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:0.9rem;font-size:0.82rem;color:var(--muted);line-height:1.75;margin-bottom:1.1rem;}
+.info code{font-family:'DM Mono',monospace;background:rgba(0,0,0,0.06);padding:0.1rem 0.3rem;border-radius:3px;font-size:0.77rem;}
+@media(max-width:768px){.sw{grid-template-columns:1fr;}.sn{display:flex;overflow-x:auto;}.sn a{border-bottom:none;border-right:1px solid var(--border);white-space:nowrap;}.form-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="nav-brand">🔔 reminder</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Lista</a>
+    <a href="/calendar" class="nav-link">Calendário</a>
+    <a href="/settings" class="nav-link active">Config</a>
+  </div>
+  <div class="nav-user">Olá, <strong>{{.User.Username}}</strong> &nbsp;<a href="/logout" class="btn btn-ghost btn-sm">Sair</a></div>
+</nav>
+
+<div class="container">
+  <h1 class="page-title">Configurações</h1>
+  {{if .Error}}<div class="alert alert-error">⚠ {{.Error}}</div>{{end}}
+  {{if .Success}}<div class="alert alert-success">✓ {{.Success}}</div>{{end}}
+
+  <div class="sw">
+    <nav class="sn">
+      <a href="#account" class="active">Conta</a>
+      <a href="#notif">Notificações</a>
+    </nav>
+    <div class="sc">
+      <div class="sec" id="account">
+        <h2 class="sec-title">Conta</h2>
+        <p class="sec-desc">Suas informações de acesso</p>
+        <div class="form-row">
+          <div class="form-group"><label>Usuário</label><input type="text" class="form-control" value="{{.User.Username}}" disabled style="opacity:0.6;"></div>
+          <div class="form-group"><label>Email</label><input type="email" class="form-control" value="{{.User.Email}}" disabled style="opacity:0.6;"></div>
+        </div>
+        <a href="/forgot-password" class="btn btn-outline btn-sm">Alterar senha via link →</a>
+      </div>
+
+      <div class="sec" id="notif">
+        <h2 class="sec-title">🔔 Notificações Web</h2>
+        <p class="sec-desc">Receba alertas diretamente no navegador quando um lembrete vencer</p>
+        <div class="info">
+          As notificações são enviadas pelo próprio navegador, sem necessidade de email ou Telegram.<br>
+          O app verifica os lembretes a cada 30 segundos e envia uma notificação quando o horário chegar.<br>
+          Para desativar: <code>Configurações do navegador → Privacidade → Notificações → reminder → Bloquear</code>
+        </div>
+        <div id="notifStatus" style="margin-bottom:1rem;font-size:0.875rem;"></div>
+        <button class="btn btn-primary" id="notifBtn" onclick="handleNotif()">Verificar / Ativar Notificações</button>
+      </div>
+
+      <div class="sec" style="background:var(--cream);">
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:1rem;">
+          <span style="font-size:0.82rem;color:var(--muted);">Notificações são configuradas automaticamente</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+{{template "base_js" .}}
+<script>
+function renderStatus(){
+  var perm=Notification.permission;
+  var s=document.getElementById('notifStatus');
+  var b=document.getElementById('notifBtn');
+  if(perm==='granted'){s.innerHTML='<span style="color:var(--sage)">✓ Notificações <strong>ativadas</strong> neste navegador</span>';b.textContent='Notificações ativas ✓';b.disabled=true;b.style.opacity='0.6';}
+  else if(perm==='denied'){s.innerHTML='<span style="color:var(--high)">✗ Notificações <strong>bloqueadas</strong>. Ative nas configurações do navegador.</span>';b.textContent='Bloqueado';b.disabled=true;b.style.opacity='0.6';}
+  else{s.innerHTML='<span style="color:var(--muted)">⚪ Aguardando permissão</span>';b.textContent='Ativar Notificações';b.disabled=false;}
+}
+function handleNotif(){
+  if(!('Notification' in window)){alert('Seu navegador não suporta notificações web.');return;}
+  Notification.requestPermission().then(function(p){renderStatus();if(p==='granted'){showToast('Notificações ativadas!','success');new Notification('🔔 Reminder',{body:'Notificações configuradas com sucesso!'});}});
+}
+renderStatus();
+</script>
+</body></html>
+{{end}}

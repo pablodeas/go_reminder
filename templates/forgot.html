@@ -1,0 +1,54 @@
+{{define "forgot"}}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reminder — Recuperar Senha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+{{template "base_css" .}}
+<style>
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;}
+.auth-wrap{width:100%;max-width:380px;}
+.auth-header{text-align:center;margin-bottom:1.75rem;}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:1.75rem;color:var(--amber);margin-bottom:0.25rem;}
+.auth-title{font-family:'DM Serif Display',serif;font-size:1.6rem;margin-bottom:0.2rem;}
+.auth-sub{color:var(--muted);font-size:0.875rem;}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;box-shadow:var(--shadow);}
+.auth-footer{text-align:center;margin-top:1.25rem;font-size:0.875rem;color:var(--muted);}
+.auth-footer a{color:var(--amber);text-decoration:none;}
+.reset-link{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:0.7rem;font-family:'DM Mono',monospace;font-size:0.77rem;word-break:break-all;margin-top:0.75rem;}
+.reset-link a{color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-wrap">
+    <div class="auth-header">
+      <div class="auth-logo">🔔 reminder</div>
+      <h1 class="auth-title">Recuperar senha</h1>
+      <p class="auth-sub">Gere um link de redefinição</p>
+    </div>
+    <div class="auth-card">
+      {{if .Error}}<div class="alert alert-error">⚠ {{.Error}}</div>{{end}}
+      {{if .Success}}
+        <div class="alert alert-info">
+          ℹ Use o link abaixo para redefinir sua senha (válido por 1 hora):
+          <div class="reset-link"><a href="{{.ResetLink}}">{{.ResetLink}}</a></div>
+        </div>
+      {{else}}
+      <form method="POST" action="/forgot-password" autocomplete="on">
+        <div class="form-group">
+          <label for="email">Email cadastrado</label>
+          <input id="email" type="email" name="email" class="form-control" placeholder="voce@email.com" required autofocus autocomplete="email">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.7rem;">Gerar Link</button>
+      </form>
+      {{end}}
+    </div>
+    <div class="auth-footer"><a href="/login">← Voltar ao login</a></div>
+  </div>
+</div>
+<div id="toast"></div>
+{{template "base_js" .}}
+</body></html>
+{{end}}
