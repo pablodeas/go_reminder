@@ -56,7 +56,9 @@
 .act{width:28px;height:28px;border:none;border-radius:6px;background:transparent;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
 .act:hover{background:var(--cream);}
 .act.del:hover{background:#fee2e2;}
+
 .stag{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;padding:0.1rem 0.45rem;border-radius:20px;font-size:0.68rem;font-family:'DM Mono',monospace;}
+.rtag{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:0.1rem 0.45rem;border-radius:20px;font-size:0.68rem;font-family:'DM Mono',monospace;display:inline-flex;align-items:center;gap:0.2rem;}
 
 .empty{text-align:center;padding:4rem 2rem;color:var(--muted);}
 .ei{font-size:2.75rem;margin-bottom:0.75rem;}
@@ -75,6 +77,10 @@
 .ni-title{font-weight:500;margin-bottom:0.12rem;}
 .ni-time{color:var(--muted);font-size:0.72rem;font-family:'DM Mono',monospace;}
 .ne{padding:1.5rem;text-align:center;color:var(--muted);font-size:0.85rem;}
+
+/* Recurrence select extra styling */
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+@media(max-width:520px){.form-grid-3{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
 <body>
@@ -92,14 +98,16 @@
   </div>
 </nav>
 
+<!-- Notification panel -->
 <div class="np" id="np">
   <div class="nh"><span>Notificações</span><button onclick="clearNotifs()" style="background:none;border:none;cursor:pointer;font-size:0.75rem;color:var(--muted);">Limpar</button></div>
   <div class="nl" id="nl"><div class="ne">Nenhuma notificação</div></div>
 </div>
 
 <div class="container">
+  <!-- Push permission banner -->
   <div id="pushBanner" class="push-banner" style="display:none;">
-    🔔 <div><strong>Ativar notificações web</strong> para receber alertas dos seus lembretes no horário.</div>
+    🔔 <div><strong>Ativar notificações web</strong> para receber alertas no horário do lembrete.</div>
     <button class="btn btn-primary btn-sm" style="margin-left:auto;flex-shrink:0;" onclick="reqPerm()">Ativar</button>
     <button onclick="document.getElementById('pushBanner').style.display='none'" style="background:none;border:none;cursor:pointer;color:#92400e;font-size:1rem;flex-shrink:0;">✕</button>
   </div>
@@ -129,6 +137,7 @@
       <option value="">Status</option>
       <option value="pending">Pendentes</option>
       <option value="overdue">Vencidos</option>
+      <option value="recurring">Recorrentes</option>
       <option value="sent">Notificados</option>
     </select>
   </div>
@@ -143,8 +152,12 @@
     {{if .Reminders}}
       {{range .Reminders}}
       <div class="item {{priorityColor .Priority}} {{if and .HasDueDate (isPast .DueDate)}}overdue{{end}}"
-           data-id="{{.ID}}" data-title="{{.Title}}" data-desc="{{.Description}}"
-           data-priority="{{.Priority}}" data-tags="{{.Tags}}"
+           data-id="{{.ID}}"
+           data-title="{{.Title}}"
+           data-desc="{{.Description}}"
+           data-priority="{{.Priority}}"
+           data-tags="{{.Tags}}"
+           data-recurrence="{{.Recurrence}}"
            data-due="{{if .HasDueDate}}{{formatDateInput .DueDate}}{{end}}"
            data-sent="{{if .HasSentAt}}1{{end}}"
            onclick="handleClick(event,this)">
@@ -153,6 +166,7 @@
           <div class="it">
             {{.Title}}
             {{if .HasSentAt}}<span class="stag">✓ notificado</span>{{end}}
+            {{$rl := recurrenceLabel .Recurrence}}{{if $rl}}<span class="rtag">🔁 {{$rl}}</span>{{end}}
             <span class="badge {{priorityColor .Priority}}">{{.Priority}}</span>
             {{if .Tags}}<span style="font-size:0.75rem;color:var(--muted);">🏷 {{.Tags}}</span>{{end}}
           </div>
@@ -178,7 +192,7 @@
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Add/Edit Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-header">
@@ -186,19 +200,47 @@
       <button onclick="closeModal('modal')" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted);">✕</button>
     </div>
     <input type="hidden" id="editId">
-    <div class="form-group"><label>Título *</label><input type="text" id="rTitle" class="form-control" placeholder="O que lembrar..."></div>
-    <div class="form-group"><label>Descrição</label><textarea id="rDesc" class="form-control" placeholder="Detalhes (opcional)"></textarea></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-      <div class="form-group"><label>Data/hora</label><input type="datetime-local" id="rDue" class="form-control"></div>
-      <div class="form-group"><label>Prioridade</label>
+    <div class="form-group">
+      <label>Título *</label>
+      <input type="text" id="rTitle" class="form-control" placeholder="O que lembrar...">
+    </div>
+    <div class="form-group">
+      <label>Descrição</label>
+      <textarea id="rDesc" class="form-control" placeholder="Detalhes (opcional)"></textarea>
+    </div>
+    <div class="form-grid-3">
+      <div class="form-group">
+        <label>Data/hora</label>
+        <input type="datetime-local" id="rDue" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Prioridade</label>
         <select id="rPriority" class="form-control">
           <option value="low">🟢 Baixa</option>
           <option value="medium" selected>🟡 Média</option>
           <option value="high">🔴 Alta</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Recorrência</label>
+        <select id="rRecurrence" class="form-control">
+          <option value="none">— Uma vez</option>
+          <option value="daily">🔁 Diário</option>
+          <option value="weekdays">🔁 Seg–Sex</option>
+          <option value="weekly">🔁 Semanal</option>
+          <option value="biweekly">🔁 Quinzenal</option>
+          <option value="monthly">🔁 Mensal</option>
+          <option value="yearly">🔁 Anual</option>
+        </select>
+      </div>
     </div>
-    <div class="form-group"><label>Tags</label><input type="text" id="rTags" class="form-control" placeholder="trabalho, pessoal (vírgula)"></div>
+    <div id="recurrenceNote" style="display:none;background:var(--amber-pale);border:1px solid #fcd09a;border-radius:8px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#92400e;margin-bottom:1rem;">
+      🔁 Após cada notificação, o lembrete avança automaticamente para o próximo horário.
+    </div>
+    <div class="form-group">
+      <label>Tags</label>
+      <input type="text" id="rTags" class="form-control" placeholder="trabalho, pessoal (vírgula)">
+    </div>
     <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem;">
       <button class="btn btn-outline" onclick="closeModal('modal')">Cancelar</button>
       <button class="btn btn-primary" id="saveBtn" onclick="saveItem()">Salvar</button>
@@ -209,13 +251,14 @@
 <div id="toast"></div>
 {{template "base_js" .}}
 <script>
-// ── Stats
+// ── Stats ────────────────────────────────────────────────────
 function updateStats(){
   var items=document.querySelectorAll('.item');
-  var now=new Date(),ov=0,hi=0,se=0;
+  var now=new Date(),ov=0,hi=0,se=0,rec=0;
   items.forEach(function(el){
     if(el.dataset.sent==='1')se++;
     if(el.classList.contains('priority-high'))hi++;
+    if(el.dataset.recurrence&&el.dataset.recurrence!=='none')rec++;
     var d=el.dataset.due;
     if(d&&new Date(d)<now&&el.dataset.sent!=='1')ov++;
   });
@@ -224,11 +267,12 @@ function updateStats(){
   row.innerHTML='<div class="stat"><strong>'+items.length+'</strong> total</div>'+
     (ov?'<div class="stat danger"><strong>'+ov+'</strong> vencidos</div>':'')+
     (hi?'<div class="stat warn"><strong>'+hi+'</strong> alta prioridade</div>':'')+
+    (rec?'<div class="stat" style="border-color:#bfdbfe;color:#1d4ed8"><strong>'+rec+'</strong> recorrentes</div>':'')+
     (se?'<div class="stat good"><strong>'+se+'</strong> notificados</div>':'');
 }
 updateStats();
 
-// ── Filter
+// ── Filter ───────────────────────────────────────────────────
 function filterItems(){
   var q=document.getElementById('searchInput').value.toLowerCase();
   var pri=document.getElementById('priFilter').value;
@@ -237,18 +281,20 @@ function filterItems(){
   document.querySelectorAll('.item').forEach(function(el){
     var title=el.dataset.title.toLowerCase(),desc=el.dataset.desc.toLowerCase(),tags=el.dataset.tags.toLowerCase();
     var p=el.dataset.priority,isSent=el.dataset.sent==='1';
+    var rec=el.dataset.recurrence;
     var due=el.dataset.due?new Date(el.dataset.due):null;
     var show=true;
     if(q&&!title.includes(q)&&!desc.includes(q)&&!tags.includes(q))show=false;
     if(pri&&p!==pri)show=false;
     if(st==='pending'&&isSent)show=false;
     if(st==='overdue'&&(!due||due>=now))show=false;
+    if(st==='recurring'&&(!rec||rec==='none'))show=false;
     if(st==='sent'&&!isSent)show=false;
     el.style.display=show?'':'none';
   });
 }
 
-// ── Selection
+// ── Selection ─────────────────────────────────────────────────
 function updateBulk(){
   var n=document.querySelectorAll('.ic:checked').length;
   document.getElementById('selCount').textContent=n;
@@ -256,7 +302,12 @@ function updateBulk(){
 }
 function clearSel(){document.querySelectorAll('.ic').forEach(function(c){c.checked=false;});updateBulk();}
 
-// ── CRUD
+// ── Recurrence note toggle ────────────────────────────────────
+document.getElementById('rRecurrence').addEventListener('change',function(){
+  document.getElementById('recurrenceNote').style.display=this.value!=='none'?'block':'none';
+});
+
+// ── CRUD ──────────────────────────────────────────────────────
 function handleClick(e,el){if(e.target.classList.contains('ic')||e.target.closest('.ia'))return;editItem(el);}
 
 function openAdd(){
@@ -266,7 +317,9 @@ function openAdd(){
   document.getElementById('rDesc').value='';
   document.getElementById('rDue').value='';
   document.getElementById('rPriority').value='medium';
+  document.getElementById('rRecurrence').value='none';
   document.getElementById('rTags').value='';
+  document.getElementById('recurrenceNote').style.display='none';
   openModal('modal');
   setTimeout(function(){document.getElementById('rTitle').focus();},80);
 }
@@ -278,7 +331,10 @@ function editItem(el){
   document.getElementById('rDesc').value=el.dataset.desc;
   document.getElementById('rDue').value=el.dataset.due;
   document.getElementById('rPriority').value=el.dataset.priority;
+  document.getElementById('rRecurrence').value=el.dataset.recurrence||'none';
   document.getElementById('rTags').value=el.dataset.tags;
+  document.getElementById('recurrenceNote').style.display=
+    (el.dataset.recurrence&&el.dataset.recurrence!=='none')?'block':'none';
   openModal('modal');
 }
 
@@ -286,7 +342,14 @@ async function saveItem(){
   var title=document.getElementById('rTitle').value.trim();
   if(!title){showToast('Título é obrigatório','error');return;}
   var id=document.getElementById('editId').value;
-  var payload={title:title,description:document.getElementById('rDesc').value,due_date:document.getElementById('rDue').value,priority:document.getElementById('rPriority').value,tags:document.getElementById('rTags').value};
+  var payload={
+    title:title,
+    description:document.getElementById('rDesc').value,
+    due_date:document.getElementById('rDue').value,
+    priority:document.getElementById('rPriority').value,
+    recurrence:document.getElementById('rRecurrence').value,
+    tags:document.getElementById('rTags').value,
+  };
   var btn=document.getElementById('saveBtn');
   btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
   try{
@@ -309,8 +372,11 @@ async function bulkDelete(){
   if(!checked.length)return;
   if(!confirm('Excluir '+checked.length+' lembrete(s)?'))return;
   var ids=checked.map(function(c){return parseInt(c.closest('.item').dataset.id);});
-  try{await api('/api/reminders/bulk-delete','POST',{ids:ids});checked.forEach(function(c){c.closest('.item').remove();});showToast('Excluídos: '+ids.length);clearSel();updateStats();}
-  catch(e){showToast(e.message,'error');}
+  try{
+    await api('/api/reminders/bulk-delete','POST',{ids:ids});
+    checked.forEach(function(c){c.closest('.item').remove();});
+    showToast('Excluídos: '+ids.length);clearSel();updateStats();
+  }catch(e){showToast(e.message,'error');}
 }
 
 async function confirmClear(){
@@ -325,7 +391,7 @@ document.addEventListener('keydown',function(e){
   if(e.key==='n'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA')openAdd();
 });
 
-// ── Notification Panel
+// ── Notification Panel ────────────────────────────────────────
 var notifs=[];
 try{notifs=JSON.parse(localStorage.getItem('reminder_notifs')||'[]');}catch(e){}
 
@@ -334,31 +400,39 @@ function togglePanel(){
   p.classList.toggle('open');
   if(p.classList.contains('open'))renderPanel();
 }
-
 function renderPanel(){
   var nl=document.getElementById('nl');
-  if(!notifs.length){nl.innerHTML='<div class="ne">Nenhuma notificação</div>';document.getElementById('bellDot').classList.remove('on');return;}
-  nl.innerHTML=notifs.slice().reverse().map(function(n){return'<div class="ni"><div class="ni-title">'+n.title+'</div><div class="ni-time">'+n.time+'</div></div>';}).join('');
+  if(!notifs.length){
+    nl.innerHTML='<div class="ne">Nenhuma notificação</div>';
+    document.getElementById('bellDot').classList.remove('on');
+    return;
+  }
+  nl.innerHTML=notifs.slice().reverse().map(function(n){
+    return'<div class="ni"><div class="ni-title">'+escHtml(n.title)+'</div><div class="ni-time">'+escHtml(n.time)+'</div></div>';
+  }).join('');
 }
-
 function clearNotifs(){notifs=[];localStorage.setItem('reminder_notifs','[]');renderPanel();}
-
 function addNotif(title,time){
   notifs.push({title:title,time:time});
   if(notifs.length>50)notifs=notifs.slice(-50);
   localStorage.setItem('reminder_notifs',JSON.stringify(notifs));
   document.getElementById('bellDot').classList.add('on');
 }
+function escHtml(s){return String(s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
 
 document.addEventListener('click',function(e){
   var p=document.getElementById('np'),b=document.getElementById('bellBtn');
   if(p.classList.contains('open')&&!p.contains(e.target)&&!b.contains(e.target))p.classList.remove('open');
 });
 
-// ── Web Push
-function checkBanner(){if(Notification.permission==='default')document.getElementById('pushBanner').style.display='flex';}
+// ── Web Push ──────────────────────────────────────────────────
+function checkBanner(){
+  if(typeof Notification==='undefined')return;
+  if(Notification.permission==='default')document.getElementById('pushBanner').style.display='flex';
+}
 
 function reqPerm(){
+  if(typeof Notification==='undefined'){showToast('Seu navegador não suporta notificações','error');return;}
   Notification.requestPermission().then(function(p){
     document.getElementById('pushBanner').style.display='none';
     if(p==='granted'){showToast('Notificações ativadas! ✓','success');startChecking();}
@@ -366,8 +440,8 @@ function reqPerm(){
   });
 }
 
-function sendNotif(title,body,tag){
-  if(Notification.permission!=='granted')return;
+function pushNotif(title,body,tag){
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
   var n=new Notification('🔔 '+title,{body:body||'',tag:tag||'rem',requireInteraction:false});
   addNotif(title+(body?' — '+body:''),new Date().toLocaleString('pt-BR'));
   n.onclick=function(){window.focus();n.close();};
@@ -384,28 +458,35 @@ function startChecking(){
 }
 
 async function checkDue(){
-  if(Notification.permission!=='granted')return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
   try{
     var data=await api('/api/reminders','GET');
     var now=new Date();
     data.forEach(function(r){
-      if(!r.DueDate||r.HasSentAt)return;
+      if(!r.DueDate)return;
+      // For recurring reminders, always allow re-notification after due date changes.
+      // We track by id+due_date to avoid double-notifying same occurrence.
+      var key=r.ID+'@'+(r.DueDate||'');
       var due=new Date(r.DueDate);
       var diffMin=(due-now)/60000;
-      if(diffMin<=5&&diffMin>-60&&notifiedIds.indexOf(r.ID)===-1){
+      if(diffMin<=5&&diffMin>-60&&notifiedIds.indexOf(key)===-1){
+        var recLabel={'daily':'Diário','weekly':'Semanal','biweekly':'Quinzenal','monthly':'Mensal','yearly':'Anual','weekdays':'Seg–Sex'}[r.Recurrence]||'';
+        var suffix=recLabel?' ('+recLabel+')':'';
         var msg=diffMin<=0?'Lembrete venceu!':'Vence em '+Math.ceil(diffMin)+' min';
-        sendNotif(r.Title,(r.Description?r.Description+' — ':'')+msg,'rem-'+r.ID);
-        notifiedIds.push(r.ID);
+        pushNotif(r.Title+suffix,(r.Description?r.Description+' — ':'')+msg,'rem-'+r.ID);
+        notifiedIds.push(key);
+        // Cap stored keys at 200
+        if(notifiedIds.length>200)notifiedIds=notifiedIds.slice(-200);
         localStorage.setItem('reminder_notified_ids',JSON.stringify(notifiedIds));
         api('/api/reminders/'+r.ID+'/notify','POST').catch(function(){});
       }
     });
-  }catch(e){}
+  }catch(e){/* silent — server may be restarting */}
 }
 
 document.addEventListener('DOMContentLoaded',function(){
   checkBanner();
-  if(Notification.permission==='granted')startChecking();
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted')startChecking();
   if(notifs.length)document.getElementById('bellDot').classList.add('on');
 });
 </script>
