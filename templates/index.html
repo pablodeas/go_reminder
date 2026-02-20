@@ -7,10 +7,20 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 {{template "base_css" .}}
 <style>
-.nav-bell{position:relative;cursor:pointer;font-size:1.15rem;background:none;border:none;color:rgba(245,240,232,0.7);padding:0.3rem 0.4rem;border-radius:6px;transition:color 0.2s;line-height:1;}
+.nav-bell{position:relative;cursor:pointer;font-size:1.15rem;background:none;border:none;color:rgba(245,240,232,0.7);padding:0.3rem 0.4rem;border-radius:6px;transition:color 0.2s;line-height:1;flex-shrink:0;}
 .nav-bell:hover{color:#f5f0e8;background:rgba(255,255,255,0.1);}
 .bell-dot{position:absolute;top:2px;right:2px;width:7px;height:7px;background:#ef4444;border-radius:50%;border:1.5px solid var(--ink);display:none;}
 .bell-dot.on{display:block;}
+.nav-right{display:flex;align-items:center;gap:0.5rem;min-width:0;}
+.nav-username{font-size:0.8rem;color:rgba(245,240,232,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;}
+.nav-username strong{color:var(--amber);}
+@media(max-width:480px){
+  .nav{padding:0 0.75rem;gap:0.25rem;}
+  .nav-brand{font-size:1.1rem;}
+  .nav-links .nav-link{padding:0.4rem 0.55rem;font-size:0.8rem;}
+  .nav-username{display:none;}
+  .np{width:calc(100vw - 2rem);right:1rem;}
+}
 
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
 .pt{font-family:'DM Serif Display',serif;font-size:1.75rem;letter-spacing:-0.02em;}
@@ -80,7 +90,7 @@
 
 /* Recurrence select extra styling */
 .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
-@media(max-width:520px){.form-grid-3{grid-template-columns:1fr 1fr;}}
+@media(max-width:520px){.form-grid-3{grid-template-columns:1fr;gap:0;}}
 </style>
 </head>
 <body>
@@ -91,9 +101,9 @@
     <a href="/calendar" class="nav-link">Calendário</a>
     <a href="/settings" class="nav-link">Config</a>
   </div>
-  <div style="display:flex;align-items:center;gap:0.65rem;">
+  <div class="nav-right">
     <button class="nav-bell" id="bellBtn" onclick="togglePanel()" title="Notificações">🔔<span class="bell-dot" id="bellDot"></span></button>
-    <span class="nav-user">Olá, <strong>{{.User.Username}}</strong></span>
+    <span class="nav-username">Olá, <strong>{{.User.Username}}</strong></span>
     <a href="/logout" class="btn btn-ghost btn-sm">Sair</a>
   </div>
 </nav>

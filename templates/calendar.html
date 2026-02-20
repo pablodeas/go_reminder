@@ -32,7 +32,17 @@
 .sd{font-family:'DM Mono',monospace;font-size:0.73rem;color:var(--muted);min-width:60px;}
 .sn2{font-size:0.875rem;font-weight:500;}
 .sdesc{font-size:0.78rem;color:var(--muted);margin-top:0.12rem;}
+.nav-right{display:flex;align-items:center;gap:0.5rem;}
+.nav-username{font-size:0.8rem;color:rgba(245,240,232,0.5);}
+.nav-username strong{color:var(--amber);}
 @media(max-width:640px){.day{min-height:55px;}.cr{font-size:0.6rem;}}
+@media(max-width:480px){
+  .nav{padding:0 0.75rem;}
+  .nav-brand{font-size:1.1rem;}
+  .nav-links .nav-link{padding:0.4rem 0.55rem;font-size:0.8rem;}
+  .nav-username{display:none;}
+  .cm{min-width:100px;font-size:0.95rem;}
+}
 </style>
 </head>
 <body>
@@ -43,7 +53,10 @@
     <a href="/calendar" class="nav-link active">Calendário</a>
     <a href="/settings" class="nav-link">Config</a>
   </div>
-  <div class="nav-user">Olá, <strong>{{.User.Username}}</strong> &nbsp;<a href="/logout" class="btn btn-ghost btn-sm">Sair</a></div>
+  <div class="nav-right">
+    <span class="nav-username">Olá, <strong>{{.User.Username}}</strong></span>
+    <a href="/logout" class="btn btn-ghost btn-sm">Sair</a>
+  </div>
 </nav>
 
 <div class="container">

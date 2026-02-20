@@ -33,6 +33,10 @@ func main() {
 	baseURL := flag.String("base-url", "", "URL base (ex: http://localhost:8080)")
 	debug := flag.Bool("debug", false, "Ativar nível DEBUG nos logs")
 	logFile := flag.String("log-file", "", "Arquivo de log (padrão: stderr)")
+
+	tlsCert := flag.String("tls-cert", "", "Caminho do certificado TLS (.pem)")
+	tlsKey  := flag.String("tls-key",  "", "Caminho da chave privada TLS (.pem)")
+
 	flag.Parse()
 
 	// ── Logging setup ──────────────────────────────────────────
@@ -207,7 +211,15 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal("Server error: %v", err)
+	if *tlsCert != "" && *tlsKey != "" {
+		log.Info("TLS ativado — cert=%s", *tlsCert)
+		if err := srv.ListenAndServeTLS(*tlsCert, *tlsKey); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server TLS error: %v", err)
+		}
+	} else {
+		log.Warn("TLS desativado — conexão não criptografada!")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server error: %v", err)
+		}
 	}
 }
